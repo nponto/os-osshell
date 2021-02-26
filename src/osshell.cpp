@@ -5,6 +5,8 @@
 #include <sstream>
 #include <vector>
 #include <unistd.h>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 void allocateArrayOfCharArrays(char ***array_ptr, size_t array_length, size_t item_size);
 void freeArrayOfCharArrays(char **array, size_t array_length);
@@ -47,6 +49,30 @@ int main (int argc, char **argv)
     //  For all other commands, check if an executable by that name is in one of the PATH directories
     //   If yes, execute it
     //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+
+    while(true)
+    {   std::string command_input;
+        
+        std::cout<<os_path;
+        std::cin>> command_input;
+
+        if(command_input == "exit")
+        {
+            std::cout<<"exiting shell";
+            break;
+        }
+        else if(command_input == "history")
+        {
+            //TODO: implemnt history
+        }
+        else
+        {
+            //TODO: implement executables
+            for(const auto & entry : fs::directory_iterator(command_input))
+                std::cout << entry.path() <<std::endl;
+
+        }        
+    }
 
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
