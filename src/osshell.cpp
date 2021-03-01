@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -6,7 +7,9 @@
 #include <vector>
 #include <unistd.h>
 #include <experimental/filesystem>
+#include <fstream>
 namespace fs = std::experimental::filesystem;
+// g++ -o osshell osshell.cpp 
 
 void allocateArrayOfCharArrays(char ***array_ptr, size_t array_length, size_t item_size);
 void freeArrayOfCharArrays(char **array, size_t array_length);
@@ -28,7 +31,7 @@ int main (int argc, char **argv)
     while (os_path_list[i] != NULL)
     {
         printf("PATH[%2d]: %s\n", i, os_path_list[i]);
-        i++;
+       i++;
     }
 
 
@@ -49,31 +52,52 @@ int main (int argc, char **argv)
     //  For all other commands, check if an executable by that name is in one of the PATH directories
     //   If yes, execute it
     //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
+    i = 0;
 
     while(true)
     {   std::string command_input;
         
-        std::cout<<os_path;
-        std::cin>> command_input;
+        
+        std::cin>>command_input;
+    
+        //add command to the history file
+        std::ofstream history_file;
+        history_file.open("history.txt", std::ios_base::app);
+        history_file << command_input <<std::endl;
+        history_file.close();
 
         if(command_input == "exit")
         {
-            std::cout<<"exiting shell";
+            std::cout<<"exiting shell"<<std::endl;
             break;
         }
         else if(command_input == "history")
         {
-            //TODO: implemnt history
+           std::fstream get_history;
+           get_history.open("history.txt", std::ios_base::in);
+           std::string line;
+           int j = 0;
+           while(getline(get_history,line))
+           {
+               std::cout << j << ": " << line << std::endl;
+               j++;
+           }
         }
         else
         {
             //TODO: implement executables
-            for(const auto & entry : fs::directory_iterator(command_input))
-                std::cout << entry.path() <<std::endl;
+            for (int i = 0; i < 9; i++) {
+                std::string path = os_path_list[i];
+                for (const auto & entry : fs::directory_iterator(path)) {
+                    std::cout << entry.path() << std::endl;
+                }
+            }
 
-        }        
+        }
+        i++;        
     }
-
+    
+  
     // Free allocated memory
     freeArrayOfCharArrays(os_path_list, 16);
     freeArrayOfCharArrays(command_list, 32);
