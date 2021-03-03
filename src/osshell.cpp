@@ -134,10 +134,21 @@ int main (int argc, char **argv)
                     std::fstream partial_history;
                     partial_history.open("history.txt", std::ios_base::in);
                     
-
+                    std::string line;
+                    int j = 0;
+                    while(getline(partial_history, line))
+                    {
+                        partial_history_list.push_back(line);
+                        j++;
+                    }
+                    std::reverse(partial_history_list.begin(), partial_history_list.end());
+                    j = j - far_back;
+                    for(int i = far_back; i >= 0; i--,j++)
+                    {
+                        std::cout << j << ": " << partial_history_list[i] << std::endl;
+                    }//for
+                
                 }
-                
-                
             
             }
         
