@@ -141,6 +141,8 @@ int main (int argc, char **argv)
                         partial_history_list.push_back(line);
                         j++;
                     }
+                    partial_history.close();
+                    
                     std::reverse(partial_history_list.begin(), partial_history_list.end());
                     j = j - far_back;
                     for(int i = far_back; i >= 0; i--,j++)
