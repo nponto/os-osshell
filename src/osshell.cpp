@@ -6,8 +6,9 @@
 #include <sstream>
 #include <vector>
 #include <unistd.h>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <fstream>
+
 #include <algorithm>
 namespace fs = std::experimental::filesystem;
 // g++ -o osshell osshell.cpp 
@@ -51,6 +52,7 @@ int main (int argc, char **argv)
     
 
     while(true)
+
     {   
         std::string command_input;
         std::vector<std::string> command_list;
@@ -143,12 +145,57 @@ int main (int argc, char **argv)
         else
         {
             //TODO: implement executables
-            /*for (int i = 0; i < 9; i++) {
+
+            char current = new char[128];
+            bool foundExe = false;
+            int compLen = 0;
+            char compStr;
+            int commandLen = 0;
+            while (command_input[commandLen] != NULL) {
+                commandLen += 1;
+            }
+            //Change 9 to be dynamic
+            for (int i = 0; i < 9; i++) {
                 std::string path = os_path_list[i];
                 for (const auto & entry : fs::directory_iterator(path)) {
-                    std::cout << entry.path() << std::endl;
+                    std::cout << entry.path() << std::endl; 
+                    current = entry.path();
+                    //This section compares the input to the last x characters in the current path executable
+                    //x = the length of the input 
+                    int compLen = 0;
+                    compStr = new char[128[;]]
+                    while (current[compLen] != NULL) {
+                        compLen += 1;
+                    }
+                    for (int i = compLen - commandLen; i < compLen; i++) {
+                        compStr[i] = current[i];
+                    }
+                    //Change this to match the x characters from the end of current
+                    //to match command_input
+                    if (command_input == compStr) {
+                        foundExe = true;
+                        break;
+                    }
                 }
-            }*/
+                if (foundExe == true) {
+                    break;
+                }
+
+            }
+            if (!foundExe) {
+                std::cout << command_input << ": Error command not found" << std::endl;
+                continue;
+            }
+
+            //Should this be formatted differently
+            int pid = fork();
+            if (pid == 0){ 
+                //Something
+            } else {
+                system(current);
+            }
+            pid.join();
+
 
         }       
     }
