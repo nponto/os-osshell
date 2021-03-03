@@ -7,8 +7,9 @@
 #include <unistd.h>
 #include <filesystem>
 #include <fstream>
-
 #include <algorithm>
+#include <sys/wait.h>
+
 namespace fs = std::filesystem;
 // g++ -o osshell osshell.cpp 
 
@@ -53,10 +54,11 @@ int main (int argc, char **argv)
     while(true)
 
     {   
+        std::cout << "osshell>";
         std::string command_input;
         std::vector<std::string> command_list;
+        char **argv;
         getline(std::cin, command_input);
-        
         splitString(command_input, ' ', command_list);
         
         if(command_list.size() == 0)
@@ -168,33 +170,36 @@ int main (int argc, char **argv)
                 if (fs::exists(exePath)) {
                     //check if exe
                     if ((fs::status(exePath).permissions() & fs::perms::owner_exec) !=  fs::perms::none) {
-                        std::cout << exePath << std::endl;
+                        //std::cout << exePath << std::endl;
                         foundExe = true;
                         //fullPath = holder;
                         break;
                     } 
                 }
             }
+
             
             if (!foundExe) {
                 std::cout << command_input << ": Error command not found" << std::endl;
                 continue;
             } else {
+                vectorOfStringsToArrayOfCharArrays(command_list, &argv);
                 int pid = fork();
                 if (pid == 0){ 
-                    std::vector<std::string> stringVec;
-                    char argv[128];
                     const char *exePointer = exePath.c_str();
-                    stringVec.push_back(exePath);
-                    if (command_list.size() > 1) {
-                        for (int i = 0; i < command_list.size(); i++) {
-                            stringVec.push_back(command_list[i]);
-                        }
-                    }
+
+                    //std::vector<std::string> stringVec;
+                    //char argv[128];
+                    //stringVec.push_back(exePath);
+                    //if (command_list.size() > 1) {
+                    //   for (int i = 0; i < command_list.size(); i++) {
+                    //        stringVec.push_back(command_list[i]);
+                    //    }
+                    //}
                     //stringVec.push_back(0);
-                    std::string tempString;
-                    for (const auto &item : stringVec) tempString += item;
-                    strcpy(argv, tempString.c_str());
+                    //std::string tempString;
+                    //for (const auto &item : stringVec) tempString += item;
+                    //strcpy(argv, tempString.c_str());
                     
                     execv(exePointer, argv);
                 } else {
