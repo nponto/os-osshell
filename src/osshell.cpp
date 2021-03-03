@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <cstdlib>
 #include <string>
@@ -160,28 +159,44 @@ int main (int argc, char **argv)
             //TODO: implement executables
             //Change 9 to be dynamic
             bool foundExe = false;
-            std::string var;
+            std::string exePath;
+            std::string fullPath;
             for (int i = 0; i < 9; i++) {
-                std::string path = os_path_list[i];
-                var = path + "/" +  command_input;
-                if (fs::exists(var)) {
+                //std::string path = os_path_list[i];
+                exePath = os_path_list[i] + "/" +  command_list[0];
+                //strcpy(exePath, holder.c_str());
+                if (fs::exists(exePath)) {
                     //check if exe
-                    if ((fs::status(var).permissions() & fs::perms::owner_exec) !=  fs::perms::none) {
-                        std::cout << var << std::endl;
+                    if ((fs::status(exePath).permissions() & fs::perms::owner_exec) !=  fs::perms::none) {
+                        std::cout << exePath << std::endl;
                         foundExe = true;
+                        //fullPath = holder;
                         break;
                     } 
                 }
             }
+            
             if (!foundExe) {
                 std::cout << command_input << ": Error command not found" << std::endl;
                 continue;
             } else {
                 int pid = fork();
                 if (pid == 0){ 
-                    //maybe move this
-                    char *argv[] = {var, , 0};
-                    execv(var, argv);
+                    std::vector<std::string> stringVec;
+                    char argv[128];
+                    const char *exePointer = exePath.c_str();
+                    stringVec.push_back(exePath);
+                    if (command_list.size() > 1) {
+                        for (int i = 0; i < command_list.size(); i++) {
+                            stringVec.push_back(command_list[i]);
+                        }
+                    }
+                    //stringVec.push_back(0);
+                    std::string tempString;
+                    for (const auto &item : stringVec) tempString += item;
+                    strcpy(argv, tempString.c_str());
+                    
+                    execv(exePointer, argv);
                 } else {
                     int status;
                     waitpid(pid, &status, 0);
