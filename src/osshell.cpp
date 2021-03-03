@@ -8,41 +8,37 @@
 #include <unistd.h>
 #include <experimental/filesystem>
 #include <fstream>
+#include <algorithm>
 namespace fs = std::experimental::filesystem;
 // g++ -o osshell osshell.cpp 
 
-void allocateArrayOfCharArrays(char ***array_ptr, size_t array_length, size_t item_size);
+void splitString(std::string text, char d, std::vector<std::string>& result);
+void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result);
 void freeArrayOfCharArrays(char **array, size_t array_length);
-void splitString(std::string text, char d, char **result);
 
 int main (int argc, char **argv)
 {
     // Get list of paths to binary executables
     // `os_path_list` supports up to 16 directories in PATH, 
     //     each with a directory name length of up to 64 characters
-    char **os_path_list;
-    allocateArrayOfCharArrays(&os_path_list, 16, 64);
+    // Get list of paths to binary executables
+    std::vector<std::string> os_path_list;
     char* os_path = getenv("PATH");
     splitString(os_path, ':', os_path_list);
 
 
     // Example code for how to loop over NULL terminated list of strings
-    int i = 0;
-    while (os_path_list[i] != NULL)
+    /*int i = 0;
+    while (i < os_path_list.size())
     {
         printf("PATH[%2d]: %s\n", i, os_path_list[i]);
        i++;
-    }
+    }*/
 
 
     // Welcome message
     printf("Welcome to OSShell! Please enter your commands ('exit' to quit).\n");
 
-    // Allocate space for input command lists
-    // `command_list` supports up to 32 command line parameters, 
-    //     each with a parameter string length of up to 128 characters
-    char **command_list;
-    allocateArrayOfCharArrays(&command_list, 32, 128);
 
     // Repeat:
     //  Print prompt for user input: "osshell> " (no newline)
@@ -52,72 +48,129 @@ int main (int argc, char **argv)
     //  For all other commands, check if an executable by that name is in one of the PATH directories
     //   If yes, execute it
     //   If no, print error statement: "<command_name>: Error command not found" (do include newline)
-    i = 0;
+    
 
     while(true)
-    {   std::string command_input;
+    {   
+        std::string command_input;
+        std::vector<std::string> command_list;
+        getline(std::cin, command_input);
         
+        splitString(command_input, ' ', command_list);
         
-        std::cin>>command_input;
-    
-        //add command to the history file
-        std::ofstream history_file;
-        history_file.open("history.txt", std::ios_base::app);
-        history_file << command_input <<std::endl;
-        history_file.close();
-
-        if(command_input == "exit")
+        if(command_list.size() == 0)
+        {
+            //if the command is just a newline, go to next iteration of while loop
+            continue;
+        }
+        else
+        {
+            //add command to the history file
+            std::ofstream history_file;
+            history_file.open("history.txt", std::ios_base::app);
+            history_file << command_input <<std::endl;
+            history_file.close();
+        }
+        
+        if(command_list[0] == "exit")
         {
             std::cout<<"exiting shell"<<std::endl;
             break;
         }
-        else if(command_input == "history")
+        //HISTORY command
+        else if(command_list[0].find("history") != std::string::npos)
         {
-           std::fstream get_history;
-           get_history.open("history.txt", std::ios_base::in);
-           std::string line;
-           int j = 0;
-           while(getline(get_history,line))
-           {
-               std::cout << j << ": " << line << std::endl;
-               j++;
-           }
+            //if history is the only parameter
+            if(command_list.size() == 1)
+            {
+                std::ifstream get_history("history.txt");
+                //get_history.open("history.txt", std::ios_base::in);
+                std::string line;
+
+                int j = 0;
+                while(std::getline(get_history,line))
+                {
+                    std::cout << j << ": " << line << std::endl;
+                    j++;
+                }
+                get_history.close();
+            }
+            //check if there is more than one parameter
+            if(command_list.size() > 1)
+            {
+                //if second paramter is clear, clear the history.txt
+                if(command_list[1].find("clear") != std::string::npos)
+                {
+                    std::fstream delete_history;
+                    delete_history.open("history.txt", std::ios_base::out);
+                    delete_history << "";
+                    std::cout << "history cleared"<<std::endl;
+                    delete_history.close();
+                    continue;
+                }
+
+                //check to see if second parameter is a digit
+                bool is_digit = true;
+                for(int i = 0; i < command_list[1].size(); i++)
+                {
+                    if(std::isdigit(command_list[1][i]) == false)
+                    {
+                        is_digit == false;
+                    }
+                }
+                //if second parameter is a digit, then create a new int with that value
+                int far_back = 0;
+                if(is_digit == true)
+                {
+                    far_back = std::stoi(command_list[1]);
+                    std::vector<std::string> partial_history_list;
+                    if(far_back < 1)
+                    {
+                        std::cout << "Error: history expects an integer > 0(or clear" << std::endl;
+                    }
+
+                    std::fstream partial_history;
+                    partial_history.open("history.txt", std::ios_base::in);
+                    
+
+                }
+                
+                
+            
+            }
+        
         }
         else
         {
             //TODO: implement executables
-            for (int i = 0; i < 9; i++) {
+            /*for (int i = 0; i < 9; i++) {
                 std::string path = os_path_list[i];
                 for (const auto & entry : fs::directory_iterator(path)) {
                     std::cout << entry.path() << std::endl;
                 }
-            }
+            }*/
 
-        }
-        i++;        
+        }       
     }
-    
-  
-    // Free allocated memory
-    freeArrayOfCharArrays(os_path_list, 16);
-    freeArrayOfCharArrays(command_list, 32);
 
     return 0;
 }
 
 /*
-   array_ptr: pointer to list of strings to be allocated
-   array_length: number of strings to allocate space for in the list
-   item_size: length of each string to allocate space for
+   list: vector of strings to convert to an array of character arrays
+   result: pointer to an array of character arrays when the vector of strings is copied to
 */
-void allocateArrayOfCharArrays(char ***array_ptr, size_t array_length, size_t item_size)
+void vectorOfStringsToArrayOfCharArrays(std::vector<std::string>& list, char ***result)
 {
     int i;
-    *array_ptr = new char*[array_length];
-    for (i = 0; i < array_length; i++)
+    int result_length = list.size() + 1;
+    *result = new char*[result_length];
+    for (i = 0; i < list.size(); i++)
     {
-        (*array_ptr)[i] = new char[item_size];
+        (*result)[i] = new char[list[i].length() + 1];
+        strcpy((*result)[i], list[i].c_str());
     }
+    (*result)[list.size()] = NULL;
 }
 
 /*
@@ -139,21 +192,58 @@ void freeArrayOfCharArrays(char **array, size_t array_length)
    d: character delimiter to split `text` on
    result: NULL terminated list of strings (char **) - result will be stored here
 */
-void splitString(std::string text, char d, char **result)
+void splitString(std::string text, char d, std::vector<std::string>& result)
 {
-    int i;
-    std::vector<std::string> list;
-    std::stringstream ss(text);
-    std::string token;
-    
-    while (std::getline(ss, token, d))
-    {
-        list.push_back(token);
-    }
+    enum states { NONE, IN_WORD, IN_STRING } state = NONE;
 
-    for (i = 0; i < list.size(); i++)
+    int i;
+    std::string token;
+    result.clear();
+    for (i = 0; i < text.length(); i++)
     {
-        strcpy(result[i], list[i].c_str());
+        char c = text[i];
+        switch (state) {
+            case NONE:
+                if (c != d)
+                {
+                    if (c == '\"')
+                    {
+                        state = IN_STRING;
+                        token = "";
+                    }
+                    else
+                    {
+                        state = IN_WORD;
+                        token = c;
+                    }
+                }
+                break;
+            case IN_WORD:
+                if (c == d)
+                {
+                    result.push_back(token);
+                    state = NONE;
+                }
+                else
+                {
+                    token += c;
+                }
+                break;
+            case IN_STRING:
+                if (c == '\"')
+                {
+                    result.push_back(token);
+                    state = NONE;
+                }
+                else
+                {
+                    token += c;
+                }
+                break;
+        }
     }
-    result[list.size()] = NULL;
+    if (state != NONE)
+    {
+        result.push_back(token);
+    }
 }
