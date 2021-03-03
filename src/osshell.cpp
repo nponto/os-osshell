@@ -10,7 +10,7 @@
 #include <fstream>
 
 #include <algorithm>
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 // g++ -o osshell osshell.cpp 
 
 void splitString(std::string text, char d, std::vector<std::string>& result);
@@ -145,58 +145,35 @@ int main (int argc, char **argv)
         else
         {
             //TODO: implement executables
-
-            char current = new char[128];
-            bool foundExe = false;
-            int compLen = 0;
-            char compStr;
-            int commandLen = 0;
-            while (command_input[commandLen] != NULL) {
-                commandLen += 1;
-            }
             //Change 9 to be dynamic
+            bool foundExe = false;
+            std::string var;
             for (int i = 0; i < 9; i++) {
                 std::string path = os_path_list[i];
-                for (const auto & entry : fs::directory_iterator(path)) {
-                    std::cout << entry.path() << std::endl; 
-                    current = entry.path();
-                    //This section compares the input to the last x characters in the current path executable
-                    //x = the length of the input 
-                    int compLen = 0;
-                    compStr = new char[128[;]]
-                    while (current[compLen] != NULL) {
-                        compLen += 1;
-                    }
-                    for (int i = compLen - commandLen; i < compLen; i++) {
-                        compStr[i] = current[i];
-                    }
-                    //Change this to match the x characters from the end of current
-                    //to match command_input
-                    if (command_input == compStr) {
+                var = path + "/" +  command_input;
+                if (fs::exists(var)) {
+                    //check if exe
+                    if ((fs::status(var).permissions() & fs::perms::owner_exec) !=  fs::perms::none) {
+                        std::cout << var << std::endl;
                         foundExe = true;
                         break;
-                    }
+                    } 
                 }
-                if (foundExe == true) {
-                    break;
-                }
-
             }
             if (!foundExe) {
                 std::cout << command_input << ": Error command not found" << std::endl;
                 continue;
-            }
-
-            //Should this be formatted differently
-            int pid = fork();
-            if (pid == 0){ 
-                //Something
             } else {
-                system(current);
+                int pid = fork();
+                if (pid == 0){ 
+                    //maybe move this
+                    char *argv[] = {var, , 0};
+                    execv(var, argv);
+                } else {
+                    int status;
+                    waitpid(pid, &status, 0);
+                }
             }
-            pid.join();
-
-
         }       
     }
 
