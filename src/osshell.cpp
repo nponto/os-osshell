@@ -54,7 +54,7 @@ int main (int argc, char **argv)
     while(true)
 
     {   
-        std::cout << "osshell>";
+        std::cout << "osshell> ";
         std::string command_input;
         std::vector<std::string> command_list;
         char **argv;
@@ -70,7 +70,7 @@ int main (int argc, char **argv)
         
         if(command_list[0] == "exit")
         {
-            std::cout<<"exiting shell"<<std::endl;
+            //std::cout<<"exiting shell"<<std::endl;
             //add command to the history file
             std::ofstream history_file;
             history_file.open("history.txt", std::ios_base::app);
