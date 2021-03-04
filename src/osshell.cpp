@@ -66,18 +66,16 @@ int main (int argc, char **argv)
             //if the command is just a newline, go to next iteration of while loop
             continue;
         }
-        else
+        
+        
+        if(command_list[0] == "exit")
         {
+            std::cout<<"exiting shell"<<std::endl;
             //add command to the history file
             std::ofstream history_file;
             history_file.open("history.txt", std::ios_base::app);
             history_file << command_input <<std::endl;
             history_file.close();
-        }
-        
-        if(command_list[0] == "exit")
-        {
-            std::cout<<"exiting shell"<<std::endl;
             break;
         }
         //HISTORY command
@@ -143,10 +141,15 @@ int main (int argc, char **argv)
                         j++;
                     }
                     partial_history.close();
+                    if (far_back >j)
+                    {
+                        std::cout << "Not enough previous commands in history" << std::endl;
+                        continue;
+                    }
                     
                     std::reverse(partial_history_list.begin(), partial_history_list.end());
                     j = j - far_back;
-                    for(int i = far_back; i >= 0; i--,j++)
+                    for(int i = far_back; i > 0; i--,j++)
                     {
                         std::cout << j << ": " << partial_history_list[i] << std::endl;
                     }//for
@@ -207,7 +210,12 @@ int main (int argc, char **argv)
                     waitpid(pid, &status, 0);
                 }
             }
-        }       
+        }  
+            //add command to the history file
+            std::ofstream history_file;
+            history_file.open("history.txt", std::ios_base::app);
+            history_file << command_input <<std::endl;
+            history_file.close();     
     }
 
     return 0;
