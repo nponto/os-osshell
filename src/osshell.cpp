@@ -57,7 +57,8 @@ int main (int argc, char **argv)
         std::cout << "osshell> ";
         std::string command_input;
         std::vector<std::string> command_list;
-        char **argv;
+        char **argv;                    
+        char **argvDirectExe;
         getline(std::cin, command_input);
         splitString(command_input, ' ', command_list);
         
@@ -66,6 +67,28 @@ int main (int argc, char **argv)
             //if the command is just a newline, go to next iteration of while loop
             continue;
         }
+
+        //Check if input is a path to executable
+        //std::cout << command_list[0][0] << std::endl;
+
+        
+        if(command_list[0][0] == '.' || command_list[0][0] == '/') {
+            if (fs::exists(command_list[0])) {
+                if ((fs::status(command_list[0]).permissions() & fs::perms::owner_exec) !=  fs::perms::none) {
+                    vectorOfStringsToArrayOfCharArrays(command_list, &argvDirectExe);
+                    int pid = fork();
+                    if (pid == 0){ 
+                        const char *pathToExe = command_list[0].c_str();                  
+                        execv(pathToExe, argvDirectExe);
+                    } else {
+                        int status;
+                        waitpid(pid, &status, 0);
+                    }
+                } 
+            } else {
+                std::cout << command_input << "Error command not found" << std::endl;
+            }
+        } 
         
         
         if(command_list[0] == "exit")
@@ -91,7 +114,7 @@ int main (int argc, char **argv)
                 int j = 0;
                 while(std::getline(get_history,line))
                 {
-                    std::cout << j << ": " << line << std::endl;
+                    std::cout << "  " << j + 1 << ": " << line << std::endl;
                     j++;
                 }
                 get_history.close();
@@ -105,7 +128,7 @@ int main (int argc, char **argv)
                     std::fstream delete_history;
                     delete_history.open("history.txt", std::ios_base::out);
                     delete_history << "";
-                    std::cout << "history cleared"<<std::endl;
+                    //std::cout << "history cleared"<<std::endl;
                     delete_history.close();
                     continue;
                 }
@@ -116,9 +139,17 @@ int main (int argc, char **argv)
                 {
                     if(std::isdigit(command_list[1][i]) == false)
                     {
-                        is_digit == false;
+                        is_digit = false;
+                        std::cout << "Error: history expects an integer > 0 (or 'clear')" << std::endl;           
+                        std::ofstream history_file;
+                        history_file.open("history.txt", std::ios_base::app);
+                        history_file << command_input <<std::endl;
+                        history_file.close();                           
+                        break;
+                        
                     }
                 }
+
                 //if second parameter is a digit, then create a new int with that value
                 int far_back = 0;
                 if(is_digit == true)
@@ -149,11 +180,13 @@ int main (int argc, char **argv)
                     
                     std::reverse(partial_history_list.begin(), partial_history_list.end());
                     j = j - far_back;
-                    for(int i = far_back; i > 0; i--,j++)
+                    for(int i = far_back - 1; i >= 0; i--,j++)
                     {
-                        std::cout << j << ": " << partial_history_list[i] << std::endl;
+                        std::cout << "  " << j + 1 << ": " << partial_history_list[i] << std::endl;
                     }//for
                 
+                } else {
+                    continue;
                 }
             
             }
@@ -184,6 +217,10 @@ int main (int argc, char **argv)
             
             if (!foundExe) {
                 std::cout << command_input << ": Error command not found" << std::endl;
+                std::ofstream history_file;
+                history_file.open("history.txt", std::ios_base::app);
+                history_file << command_input <<std::endl;
+                history_file.close(); 
                 continue;
             } else {
                 vectorOfStringsToArrayOfCharArrays(command_list, &argv);
@@ -211,11 +248,11 @@ int main (int argc, char **argv)
                 }
             }
         }  
-            //add command to the history file
-            std::ofstream history_file;
-            history_file.open("history.txt", std::ios_base::app);
-            history_file << command_input <<std::endl;
-            history_file.close();     
+        //add command to the history file
+        std::ofstream history_file;
+        history_file.open("history.txt", std::ios_base::app);
+        history_file << command_input <<std::endl;
+        history_file.close();     
     }
 
     return 0;
